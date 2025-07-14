@@ -1,75 +1,133 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Alert } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { SearchInput } from '@/components/SearchInput';
+import { DictionaryService } from '@/services/dictionaryApi';
+import { StorageService } from '@/services/storageService';
 
 export default function HomeScreen() {
+  const [, setLoading] = useState(false);
+
+  const handleWordSelect = async (word: string) => {
+    setLoading(true);
+    try {
+      const definition = await DictionaryService.getWordDefinition(word);
+      
+      if (definition) {
+        await StorageService.addWord(definition);
+        Alert.alert(
+          'Word Added!',
+          `&ldquo;${definition.word}&rdquo; has been added to your vocabulary list.`,
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          'Word Not Found',
+          `Sorry, we could not find a definition for &ldquo;${word}&rdquo;.`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error adding word:', error);
+      Alert.alert(
+        'Error',
+        'Something went wrong while adding the word. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+    <ScrollView style={styles.container}>
+      <ThemedView style={styles.content}>
+        <ThemedView style={styles.headerContainer}>
+          <ThemedText type="title" style={styles.title}>MyDict</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Discover new words and build your vocabulary
+          </ThemedText>
+        </ThemedView>
+
+        <ThemedView style={styles.searchContainer}>
+          <SearchInput
+            onWordSelect={handleWordSelect}
+            placeholder="Search for a word..."
+          />
+        </ThemedView>
+
+        <ThemedView style={styles.instructionsContainer}>
+          <ThemedText type="subtitle" style={styles.instructionTitle}>
+            How to use MyDict:
+          </ThemedText>
+          <ThemedView style={styles.stepContainer}>
+            <ThemedText style={styles.stepNumber}>1.</ThemedText>
+            <ThemedText style={styles.stepText}>
+              Type a word in the search box above
+            </ThemedText>
+          </ThemedView>
+          <ThemedView style={styles.stepContainer}>
+            <ThemedText style={styles.stepNumber}>2.</ThemedText>
+            <ThemedText style={styles.stepText}>
+              Select from autocomplete suggestions or press search
+            </ThemedText>
+          </ThemedView>
+          <ThemedView style={styles.stepContainer}>
+            <ThemedText style={styles.stepNumber}>3.</ThemedText>
+            <ThemedText style={styles.stepText}>
+              View your saved words in the &ldquo;My Words&rdquo; tab
+            </ThemedText>
+          </ThemedView>
+        </ThemedView>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  headerContainer: {
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 30,
+    marginTop: 20,
+  },
+  title: {
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    textAlign: 'center',
+    opacity: 0.8,
+    fontSize: 16,
+  },
+  searchContainer: {
+    marginBottom: 40,
+  },
+  instructionsContainer: {
+    marginTop: 20,
+  },
+  instructionTitle: {
+    marginBottom: 16,
   },
   stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  stepNumber: {
+    fontWeight: 'bold',
+    marginRight: 8,
+    minWidth: 20,
+  },
+  stepText: {
+    flex: 1,
+    lineHeight: 20,
   },
 });
