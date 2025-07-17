@@ -12,14 +12,17 @@ import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { DictionaryService } from '@/services/dictionaryApi';
 import { SearchSuggestion } from '@/types/dictionary';
+import { HapticFeedback } from '@/utils/haptics';
+import { AccessibilityHelper, mobileStyles } from '@/utils/accessibility';
 
 interface SearchInputProps {
   onWordSelect: (word: string) => void;
   placeholder?: string;
   language?: string;
+  disabled?: boolean;
 }
 
-export function SearchInput({ onWordSelect, placeholder = "Search for words...", language = 'en' }: SearchInputProps) {
+function SearchInputComponent({ onWordSelect, placeholder = "Search for words...", language = 'en', disabled = false }: SearchInputProps) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,14 +57,16 @@ export function SearchInput({ onWordSelect, placeholder = "Search for words...",
     return () => clearTimeout(timeoutId);
   }, [query, language]);
 
-  const handleSuggestionPress = (suggestion: SearchSuggestion) => {
+  const handleSuggestionPress = async (suggestion: SearchSuggestion) => {
+    await HapticFeedback.selection();
     setQuery(suggestion.word);
     setShowSuggestions(false);
     onWordSelect(suggestion.word);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (query.trim()) {
+      await HapticFeedback.light();
       setShowSuggestions(false);
       onWordSelect(query.trim());
     }
@@ -69,8 +74,12 @@ export function SearchInput({ onWordSelect, placeholder = "Search for words...",
 
   const renderSuggestion = ({ item }: { item: SearchSuggestion }) => (
     <TouchableOpacity
-      style={[styles.suggestionItem, { borderBottomColor: borderColor }]}
+      style={[styles.suggestionItem, { borderBottomColor: borderColor }, mobileStyles.touchTarget]}
       onPress={() => handleSuggestionPress(item)}
+      {...AccessibilityHelper.createButtonProps(
+        `${item.word}${item.phonetic ? `, pronounced ${item.phonetic}` : ''}`,
+        'Double tap to select this word suggestion'
+      )}
     >
       <View style={styles.suggestionContent}>
         <ThemedText style={styles.suggestionWord}>{item.word}</ThemedText>
@@ -85,20 +94,26 @@ export function SearchInput({ onWordSelect, placeholder = "Search for words...",
     <View style={styles.container}>
       <View style={[styles.inputContainer, { borderColor, backgroundColor }]}>
         <TextInput
-          style={[styles.input, { color: textColor }]}
+          style={[styles.input, { color: textColor, opacity: disabled ? 0.5 : 1 }]}
           value={query}
-          onChangeText={setQuery}
+          onChangeText={disabled ? undefined : setQuery}
           placeholder={placeholder}
           placeholderTextColor={textColor + '80'}
-          onSubmitEditing={handleSubmit}
+          onSubmitEditing={disabled ? undefined : handleSubmit}
           returnKeyType="search"
           autoCapitalize="none"
           autoCorrect={false}
+          editable={!disabled}
+          {...AccessibilityHelper.createSearchProps(
+            placeholder,
+            disabled ? 'Search is disabled while adding word' : 'Type to search for words. Suggestions will appear below.',
+            showSuggestions
+          )}
         />
         {loading && <ActivityIndicator size="small" style={styles.loadingIndicator} />}
       </View>
       
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && suggestions.length > 0 && !disabled && (
         <ThemedView style={[styles.suggestionsContainer, { borderColor }]}>
           <FlatList
             data={suggestions}
@@ -162,4 +177,29 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     fontStyle: 'italic',
   },
+});
+
+// Memoize SearchInput with custom comparison
+export const SearchInput = React.memo(SearchInputComponent, (prevProps, nextProps) => {
+  // Check if onWordSelect function changed
+  if (prevProps.onWordSelect !== nextProps.onWordSelect) {
+    return false;
+  }
+  
+  // Check if placeholder changed
+  if (prevProps.placeholder !== nextProps.placeholder) {
+    return false;
+  }
+  
+  // Check if language changed
+  if (prevProps.language !== nextProps.language) {
+    return false;
+  }
+  
+  // Check if disabled changed
+  if (prevProps.disabled !== nextProps.disabled) {
+    return false;
+  }
+  
+  return true;
 });

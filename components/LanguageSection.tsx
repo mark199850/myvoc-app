@@ -1,50 +1,57 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useTheme } from '@/hooks/useTheme';
+import { useExpansionState } from '@/hooks/useExpansionState';
 import { WordCard } from '@/components/WordCard';
 import { Language, WordDefinition, WordCategory } from '@/types/dictionary';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { getTotalWordCount } from '@/utils/wordUtils';
+import { capitalizeFirst } from '@/utils/languageUtils';
+import { HapticFeedback } from '@/utils/haptics';
+import { AccessibilityHelper, mobileStyles } from '@/utils/accessibility';
 
 interface LanguageSectionProps {
   language: Language;
   wordsByCategory: WordCategory;
-  onWordPress: (word: WordDefinition) => void;
+  onWordPress?: (word: WordDefinition) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
 }
 
-export function LanguageSection({ 
+function LanguageSectionComponent({ 
   language, 
   wordsByCategory, 
   onWordPress, 
   isExpanded, 
   onToggleExpand 
 }: LanguageSectionProps) {
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const tintColor = useThemeColor({}, 'tint');
-  const borderColor = useThemeColor({}, 'text');
+  const theme = useTheme();
+  const { isExpanded: isCategoryExpanded, toggleItem: toggleCategory } = useExpansionState();
 
-  const toggleCategory = (category: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(category)) {
-      newExpanded.delete(category);
-    } else {
-      newExpanded.add(category);
-    }
-    setExpandedCategories(newExpanded);
+  const handleLanguageToggle = async () => {
+    await HapticFeedback.light();
+    onToggleExpand();
   };
 
-  const getTotalWords = () => {
-    return Object.values(wordsByCategory).reduce((total, words) => total + words.length, 0);
+  const handleCategoryToggle = async (category: string) => {
+    await HapticFeedback.light();
+    toggleCategory(category);
   };
+
+  const totalWords = getTotalWordCount(wordsByCategory);
 
   return (
     <ThemedView style={styles.container}>
       <TouchableOpacity 
-        style={[styles.languageHeader, { borderBottomColor: borderColor + '30' }]}
-        onPress={onToggleExpand}
+        style={[styles.languageHeader, { borderBottomColor: theme.borderOpacity }, mobileStyles.touchTarget]}
+        onPress={handleLanguageToggle}
+        {...AccessibilityHelper.createExpandableProps(
+          `${language.name} language section`,
+          isExpanded,
+          `${totalWords} words available. ${isExpanded ? 'Collapse' : 'Expand'} to ${isExpanded ? 'hide' : 'show'} word categories.`
+        )}
       >
         <View style={styles.languageInfo}>
           <ThemedText style={styles.flag}>{language.flag}</ThemedText>
@@ -52,13 +59,13 @@ export function LanguageSection({
             {language.name}
           </ThemedText>
           <ThemedText style={styles.wordCount}>
-            ({getTotalWords()} words)
+            ({totalWords} words)
           </ThemedText>
         </View>
         <IconSymbol 
           name={isExpanded ? "chevron.up" : "chevron.down"} 
           size={20} 
-          color={tintColor} 
+          color={theme.tint} 
         />
       </TouchableOpacity>
 
@@ -67,31 +74,36 @@ export function LanguageSection({
           {Object.entries(wordsByCategory).map(([category, words]) => (
             <View key={category} style={styles.categoryContainer}>
               <TouchableOpacity 
-                style={styles.categoryHeader}
-                onPress={() => toggleCategory(category)}
+                style={[styles.categoryHeader, mobileStyles.touchTarget]}
+                onPress={() => handleCategoryToggle(category)}
+                {...AccessibilityHelper.createExpandableProps(
+                  `${capitalizeFirst(category)} category`,
+                  isCategoryExpanded(category),
+                  `${words.length} ${category} words. ${isCategoryExpanded(category) ? 'Collapse' : 'Expand'} to ${isCategoryExpanded(category) ? 'hide' : 'show'} word list.`
+                )}
               >
                 <ThemedText type="subtitle" style={styles.categoryTitle}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                  {capitalizeFirst(category)}
                 </ThemedText>
                 <View style={styles.categoryInfo}>
                   <ThemedText style={styles.categoryCount}>
                     {words.length}
                   </ThemedText>
                   <IconSymbol 
-                    name={expandedCategories.has(category) ? "chevron.up" : "chevron.down"} 
+                    name={isCategoryExpanded(category) ? "chevron.up" : "chevron.down"} 
                     size={16} 
-                    color={tintColor} 
+                    color={theme.tint} 
                   />
                 </View>
               </TouchableOpacity>
 
-              {expandedCategories.has(category) && (
+              {isCategoryExpanded(category) && (
                 <View style={styles.wordsContainer}>
                   {words.map((word) => (
                     <WordCard 
                       key={word.id} 
                       word={word} 
-                      onPress={() => onWordPress(word)} 
+                      onPress={onWordPress ? () => onWordPress(word) : undefined} 
                     />
                   ))}
                 </View>
@@ -161,4 +173,56 @@ const styles = StyleSheet.create({
   wordsContainer: {
     marginTop: 8,
   },
+});
+
+// Memoize the component with custom comparison function
+export const LanguageSection = React.memo(LanguageSectionComponent, (prevProps, nextProps) => {
+  // Language comparison
+  if (prevProps.language.code !== nextProps.language.code) {
+    return false;
+  }
+  
+  // Expansion state comparison
+  if (prevProps.isExpanded !== nextProps.isExpanded) {
+    return false;
+  }
+  
+  // Function reference comparison (should be stable)
+  if (prevProps.onToggleExpand !== nextProps.onToggleExpand) {
+    return false;
+  }
+  
+  if (prevProps.onWordPress !== nextProps.onWordPress) {
+    return false;
+  }
+  
+  // WordsByCategory comparison - check if categories and their word counts changed
+  const prevCategories = Object.keys(prevProps.wordsByCategory);
+  const nextCategories = Object.keys(nextProps.wordsByCategory);
+  
+  if (prevCategories.length !== nextCategories.length) {
+    return false;
+  }
+  
+  for (const category of prevCategories) {
+    if (!nextProps.wordsByCategory[category]) {
+      return false;
+    }
+    
+    const prevWords = prevProps.wordsByCategory[category];
+    const nextWords = nextProps.wordsByCategory[category];
+    
+    if (prevWords.length !== nextWords.length) {
+      return false;
+    }
+    
+    // Check if word IDs changed (assuming word IDs are stable)
+    for (let i = 0; i < prevWords.length; i++) {
+      if (prevWords[i].id !== nextWords[i].id) {
+        return false;
+      }
+    }
+  }
+  
+  return true;
 });

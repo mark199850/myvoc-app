@@ -1,4 +1,5 @@
 import { WordDefinition, SearchSuggestion } from '@/types/dictionary';
+import { logError } from '@/utils/errorUtils';
 
 // Dummy data for development - will be replaced with Oxford API
 const DUMMY_WORDS: Record<string, WordDefinition> = {
@@ -68,48 +69,63 @@ const DUMMY_WORDS: Record<string, WordDefinition> = {
 export class DictionaryService {
   // Search for word suggestions (autocomplete)
   static async searchSuggestions(query: string, language: string = 'en'): Promise<SearchSuggestion[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const suggestions = Object.keys(DUMMY_WORDS)
-      .filter(word => word.toLowerCase().includes(query.toLowerCase()))
-      .map(word => ({
-        word,
-        language,
-        phonetic: DUMMY_WORDS[word].phonetic
-      }));
-    
-    return suggestions.slice(0, 5); // Limit to 5 suggestions
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const suggestions = Object.keys(DUMMY_WORDS)
+        .filter(word => word.toLowerCase().includes(query.toLowerCase()))
+        .map(word => ({
+          word,
+          language,
+          phonetic: DUMMY_WORDS[word].phonetic
+        }));
+      
+      return suggestions.slice(0, 5); // Limit to 5 suggestions
+    } catch (error) {
+      logError(error, 'DictionaryService.searchSuggestions');
+      return [];
+    }
   }
 
   // Get full word definition
   static async getWordDefinition(word: string, language: string = 'en'): Promise<WordDefinition | null> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const definition = DUMMY_WORDS[word.toLowerCase()];
-    if (!definition) {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const definition = DUMMY_WORDS[word.toLowerCase()];
+      if (!definition) {
+        return null;
+      }
+      
+      return {
+        ...definition,
+        id: Math.random().toString(36).substr(2, 9), // Generate unique ID
+        dateAdded: new Date()
+      };
+    } catch (error) {
+      logError(error, 'DictionaryService.getWordDefinition');
       return null;
     }
-    
-    return {
-      ...definition,
-      id: Math.random().toString(36).substr(2, 9), // Generate unique ID
-      dateAdded: new Date()
-    };
   }
 
-  // TODO: Replace with actual Oxford API integration
+  // INTEGRATION: Replace with actual Oxford API integration when API keys are available
   static async searchOxfordAPI(word: string, language: string = 'en'): Promise<WordDefinition | null> {
-    // This will be implemented when Oxford API keys are available
-    // const response = await fetch(`https://od-api.oxforddictionaries.com/api/v2/entries/${language}/${word}`, {
-    //   headers: {
-    //     'app_id': process.env.OXFORD_APP_ID,
-    //     'app_key': process.env.OXFORD_APP_KEY
-    //   }
-    // });
-    // return response.json();
-    
-    return this.getWordDefinition(word, language);
+    try {
+      // This will be implemented when Oxford API keys are available
+      // const response = await fetch(`https://od-api.oxforddictionaries.com/api/v2/entries/${language}/${word}`, {
+      //   headers: {
+      //     'app_id': process.env.OXFORD_APP_ID,
+      //     'app_key': process.env.OXFORD_APP_KEY
+      //   }
+      // });
+      // return response.json();
+      
+      return this.getWordDefinition(word, language);
+    } catch (error) {
+      logError(error, 'DictionaryService.searchOxfordAPI');
+      return null;
+    }
   }
 }

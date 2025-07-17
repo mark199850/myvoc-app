@@ -1,129 +1,200 @@
-import React from 'react';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { WordDefinition } from '@/types/dictionary';
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { SIZES } from "@/constants/ui";
+import { useTheme } from "@/hooks/useTheme";
+import { WordDefinition } from "@/types/dictionary";
+import { AccessibilityHelper, mobileStyles } from "@/utils/accessibility";
+import { HapticFeedback } from "@/utils/haptics";
+import { getMainDefinition, getPartOfSpeech } from "@/utils/wordUtils";
+import { useRouter } from "expo-router";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface WordCardProps {
   word: WordDefinition;
   onPress?: () => void;
 }
 
-export function WordCard({ word, onPress }: WordCardProps) {
+function WordCardComponent({ word, onPress }: WordCardProps) {
   const router = useRouter();
-  const borderColor = useThemeColor({}, 'text');
-  const tintColor = useThemeColor({}, 'tint');
+  const theme = useTheme();
 
-  const getMainDefinition = () => {
-    const firstDef = word.definitions[0];
-    if (firstDef && firstDef.meanings.length > 0) {
-      return firstDef.meanings[0].definition;
-    }
-    return 'No definition available';
+  const handlePress = async () => {
+    await HapticFeedback.light();
+    onPress ? onPress() : router.push(`/word/${word.id}`);
   };
 
-  const getPartOfSpeech = () => {
-    return word.definitions[0]?.partOfSpeech || 'unknown';
-  };
-
-  const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      router.push(`/word/${word.id}`);
-    }
-  };
+  const accessibilityProps = AccessibilityHelper.createWordCardProps(
+    word.word,
+    getMainDefinition(word),
+    getPartOfSpeech(word),
+    !!word.audioUrl
+  );
 
   return (
-    <TouchableOpacity onPress={handlePress} style={styles.container}>
-      <ThemedView style={[styles.card, { borderColor: borderColor + '30' }]}>
-        <View style={styles.header}>
-          <ThemedText type="defaultSemiBold" style={styles.wordText}>
-            {word.word}
-          </ThemedText>
-          <View style={[styles.partOfSpeechBadge, { backgroundColor: tintColor + '20' }]}>
-            <ThemedText style={[styles.partOfSpeechText, { color: tintColor }]}>
-              {getPartOfSpeech()}
-            </ThemedText>
-          </View>
-        </View>
-        
-        {word.phonetic && (
-          <ThemedText style={styles.phoneticText}>
-            {word.phonetic}
-          </ThemedText>
-        )}
-        
-        <ThemedText style={styles.definitionText} numberOfLines={2}>
-          {getMainDefinition()}
+    <ThemedView style={[styles.card, { borderColor: theme.borderOpacity }]}>
+      <View style={styles.header}>
+        <ThemedText type="defaultSemiBold" style={styles.wordText}>
+          {word.word}
         </ThemedText>
-        
-        <View style={styles.footer}>
-          <ThemedText style={styles.dateText}>
-            Added {new Date(word.dateAdded).toLocaleDateString()}
-          </ThemedText>
-          {word.audioUrl && (
-            <ThemedText style={[styles.audioIndicator, { color: tintColor }]}>
-              🔊
+        <View
+          style={[
+            styles.haveBeenLearnedBadge,
+            { backgroundColor: theme.tint + "20" },
+          ]}
+          {...AccessibilityHelper.createButtonProps(getPartOfSpeech(word))}
+        >
+          <TouchableOpacity>
+            <ThemedText
+              style={[styles.haveBeenLearnedText, { color: theme.tint }]}
+            >
+              {getPartOfSpeech(word)}
             </ThemedText>
-          )}
+          </TouchableOpacity>
         </View>
-      </ThemedView>
-    </TouchableOpacity>
+      </View>
+
+      {word.phonetic && (
+        <ThemedText
+          style={styles.phoneticText}
+          {...AccessibilityHelper.createTextProps(
+            `Pronunciation: ${word.phonetic}`
+          )}
+        >
+          {word.phonetic}
+        </ThemedText>
+      )}
+
+      <ThemedText
+        style={styles.definitionText}
+        numberOfLines={2}
+        {...AccessibilityHelper.createTextProps(getMainDefinition(word))}
+      >
+        {getMainDefinition(word)}
+      </ThemedText>
+
+      <View style={styles.footer}>
+        <ThemedText
+          style={styles.dateText}
+          {...AccessibilityHelper.createTextProps(
+            `Added on ${new Date(word.dateAdded).toLocaleDateString()}`
+          )}
+        >
+          Added {new Date(word.dateAdded).toLocaleDateString()}
+        </ThemedText>
+        {word.audioUrl && (
+          <TouchableOpacity
+            onPress={handlePress}
+            style={[styles.container, mobileStyles.touchTarget]}
+            {...accessibilityProps}
+          >
+            <ThemedText
+              style={[styles.audioIndicator, { color: theme.tint }]}
+              {...AccessibilityHelper.createTextProps(
+                "Audio pronunciation available"
+              )}
+            >
+              More details -&gt;
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+      </View>
+    </ThemedView>
   );
 }
 
+// Memoize WordCard with custom comparison
+export const WordCard = React.memo(
+  WordCardComponent,
+  (prevProps, nextProps) => {
+    // Check if word object changed
+    if (prevProps.word.id !== nextProps.word.id) {
+      return false;
+    }
+
+    // Check if word content changed
+    if (prevProps.word.word !== nextProps.word.word) {
+      return false;
+    }
+
+    // Check if phonetic changed
+    if (prevProps.word.phonetic !== nextProps.word.phonetic) {
+      return false;
+    }
+
+    // Check if audioUrl changed
+    if (prevProps.word.audioUrl !== nextProps.word.audioUrl) {
+      return false;
+    }
+
+    // Check if definitions changed (shallow comparison)
+    if (
+      prevProps.word.definitions.length !== nextProps.word.definitions.length
+    ) {
+      return false;
+    }
+
+    // Check if onPress function changed
+    if (prevProps.onPress !== nextProps.onPress) {
+      return false;
+    }
+
+    // For performance, we'll assume definitions don't change unless the word ID changes
+    return true;
+  }
+);
+
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 12,
+    marginBottom: SIZES.SPACING.MD,
+    paddingTop: SIZES.SPACING.MD,
   },
   card: {
-    padding: 16,
-    borderRadius: 12,
+    padding: SIZES.SPACING.LG,
+    paddingBottom: SIZES.SPACING.XS,
+    borderRadius: SIZES.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: SIZES.SPACING.SM,
   },
   wordText: {
-    fontSize: 18,
+    fontSize: SIZES.FONT.XLARGE,
     flex: 1,
   },
-  partOfSpeechBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  haveBeenLearnedBadge: {
+    paddingHorizontal: SIZES.SPACING.SM,
+    paddingVertical: SIZES.SPACING.XS,
+    borderRadius: SIZES.BORDER_RADIUS.MEDIUM,
   },
-  partOfSpeechText: {
-    fontSize: 12,
-    fontWeight: '600',
+  haveBeenLearnedText: {
+    fontSize: SIZES.FONT.SMALL,
+    fontWeight: "600",
   },
   phoneticText: {
-    fontSize: 14,
-    fontStyle: 'italic',
+    fontSize: SIZES.FONT.MEDIUM,
+    fontStyle: "italic",
     opacity: 0.7,
-    marginBottom: 8,
+    marginBottom: SIZES.SPACING.SM,
   },
   definitionText: {
-    fontSize: 14,
+    fontSize: SIZES.FONT.MEDIUM,
     lineHeight: 20,
-    marginBottom: 12,
+    marginBottom: SIZES.SPACING.MD,
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   dateText: {
-    fontSize: 12,
+    fontSize: SIZES.FONT.SMALL,
     opacity: 0.6,
   },
   audioIndicator: {
-    fontSize: 16,
+    fontSize: SIZES.FONT.LARGE,
   },
 });
