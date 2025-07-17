@@ -20,7 +20,7 @@ export function useWordOperations(options: UseWordOperationsOptions = {}) {
   const addWord = useCallback(async (word: string) => {
     try {
       const definition = await executeAddWord(() => DictionaryService.getWordDefinition(word));
-      
+      console.log(definition)
       if (definition) {
         await WordService.addWord(definition);
         await HapticFeedback.success();

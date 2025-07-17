@@ -82,22 +82,18 @@ function WordCardComponent({ word, onPress }: WordCardProps) {
         >
           Added {new Date(word.dateAdded).toLocaleDateString()}
         </ThemedText>
-        {word.audioUrl && (
-          <TouchableOpacity
-            onPress={handlePress}
-            style={[styles.container, mobileStyles.touchTarget]}
-            {...accessibilityProps}
+        <TouchableOpacity
+          onPress={handlePress}
+          style={[styles.container, mobileStyles.touchTarget]}
+          {...accessibilityProps}
+        >
+          <ThemedText
+            style={[styles.moreDetailsButton, { color: theme.tint }]}
+            {...AccessibilityHelper.createTextProps("More details -&gt;")}
           >
-            <ThemedText
-              style={[styles.audioIndicator, { color: theme.tint }]}
-              {...AccessibilityHelper.createTextProps(
-                "Audio pronunciation available"
-              )}
-            >
-              More details -&gt;
-            </ThemedText>
-          </TouchableOpacity>
-        )}
+            More details -&gt;
+          </ThemedText>
+        </TouchableOpacity>
       </View>
     </ThemedView>
   );
@@ -194,7 +190,7 @@ const styles = StyleSheet.create({
     fontSize: SIZES.FONT.SMALL,
     opacity: 0.6,
   },
-  audioIndicator: {
+  moreDetailsButton: {
     fontSize: SIZES.FONT.LARGE,
   },
 });
