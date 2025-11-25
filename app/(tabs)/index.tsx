@@ -1,11 +1,11 @@
-import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { SearchInput } from '@/components/SearchInput';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Section } from '@/components/ui/Section';
-import { SearchInput } from '@/components/SearchInput';
-import { useWordOperations } from '@/hooks/useWordOperations';
 import { SIZES } from '@/constants/ui';
+import { useWordOperations } from '@/hooks/useWordOperations';
+import React from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
   const { addWord, loading } = useWordOperations();

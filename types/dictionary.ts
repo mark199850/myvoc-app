@@ -1,23 +1,27 @@
 export interface WordDefinition {
   id: string;
-  word: string;
-  language: string;
-  phonetic?: string;
-  audioUrl?: string;
-  definitions: Definition[];
   dateAdded: Date;
-}
-
-export interface Definition {
-  partOfSpeech: string;
+  language: string;
+  word: string;
+  pronunciation: PronunciationGroup;
   meanings: Meaning[];
 }
 
+export interface PronunciationGroup {
+  us: PronunciationVariant;
+  uk: PronunciationVariant;
+  au: PronunciationVariant;
+  default: PronunciationVariant;
+}
+
+export interface PronunciationVariant {
+  ipa: string | null;
+  audioUrl: string;
+}
+
 export interface Meaning {
-  definition: string;
-  example?: string;
-  synonyms?: string[];
-  antonyms?: string[];
+  partOfSpeech: string;
+  definitions: string[];
 }
 
 export interface Language {

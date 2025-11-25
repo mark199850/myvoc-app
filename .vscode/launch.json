@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to Packager (Remote Debug)",
+      "request": "attach",
+      "type": "expo",
+      "cwd": "${workspaceFolder}",
+      // Optional, but sometimes necessary if Metro is on a non-default port
+      // "port": 8081 
+    }
+  ]
+}

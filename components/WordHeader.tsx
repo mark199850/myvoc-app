@@ -33,10 +33,10 @@ export function WordHeader({
         </TouchableOpacity>
       </ThemedView>
 
-      {word.phonetic && (
+      {word.pronunciation.default.ipa && (
         <ThemedView style={styles.phoneticContainer}>
-          <ThemedText style={styles.phoneticText}>{word.phonetic}</ThemedText>
-          {word.audioUrl && (
+          <ThemedText style={styles.phoneticText}>{word.pronunciation.default.ipa}</ThemedText>
+          {word.pronunciation.default.audioUrl && (
             <AudioButton
               onPress={onPlayAudio}
               loading={audioLoading}

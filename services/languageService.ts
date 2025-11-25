@@ -3,7 +3,6 @@ import { getLanguageInfo } from '@/utils/languageUtils';
 import { StorageService } from './storageService';
 
 export class LanguageService {
-  // Get user's active languages
   static async getUserLanguages(): Promise<Language[]> {
     try {
       const userWords = await StorageService.getUserWords();

@@ -1,16 +1,16 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useTheme } from '@/hooks/useTheme';
-import { useExpansionState } from '@/hooks/useExpansionState';
-import { WordCard } from '@/components/WordCard';
-import { Language, WordDefinition, WordCategory } from '@/types/dictionary';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { getTotalWordCount } from '@/utils/wordUtils';
-import { capitalizeFirst } from '@/utils/languageUtils';
-import { HapticFeedback } from '@/utils/haptics';
+import { WordCard } from '@/components/WordCard';
+import { useExpansionState } from '@/hooks/useExpansionState';
+import { useTheme } from '@/hooks/useTheme';
+import { Language, WordCategory, WordDefinition } from '@/types/dictionary';
 import { AccessibilityHelper, mobileStyles } from '@/utils/accessibility';
+import { HapticFeedback } from '@/utils/haptics';
+import { capitalizeFirst } from '@/utils/languageUtils';
+import { getTotalWordCount } from '@/utils/wordUtils';
+import React from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface LanguageSectionProps {
   language: Language;
@@ -177,17 +177,14 @@ const styles = StyleSheet.create({
 
 // Memoize the component with custom comparison function
 export const LanguageSection = React.memo(LanguageSectionComponent, (prevProps, nextProps) => {
-  // Language comparison
   if (prevProps.language.code !== nextProps.language.code) {
     return false;
   }
   
-  // Expansion state comparison
   if (prevProps.isExpanded !== nextProps.isExpanded) {
     return false;
   }
   
-  // Function reference comparison (should be stable)
   if (prevProps.onToggleExpand !== nextProps.onToggleExpand) {
     return false;
   }
@@ -196,7 +193,6 @@ export const LanguageSection = React.memo(LanguageSectionComponent, (prevProps, 
     return false;
   }
   
-  // WordsByCategory comparison - check if categories and their word counts changed
   const prevCategories = Object.keys(prevProps.wordsByCategory);
   const nextCategories = Object.keys(nextProps.wordsByCategory);
   
@@ -216,7 +212,6 @@ export const LanguageSection = React.memo(LanguageSectionComponent, (prevProps, 
       return false;
     }
     
-    // Check if word IDs changed (assuming word IDs are stable)
     for (let i = 0; i < prevWords.length; i++) {
       if (prevWords[i].id !== nextWords[i].id) {
         return false;

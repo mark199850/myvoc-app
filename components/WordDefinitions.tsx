@@ -1,56 +1,50 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useTheme } from '@/hooks/useTheme';
-import { WordDefinition } from '@/types/dictionary';
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useTheme } from "@/hooks/useTheme";
+import { Meaning, WordDefinition } from "@/types/dictionary";
+import React from "react";
+import { StyleSheet, View } from "react-native";
 
 interface WordDefinitionsProps {
   word: WordDefinition;
 }
 
-export function WordDefinitions({ word }: WordDefinitionsProps) {
+export function WordMeanings({ word }: WordDefinitionsProps) {
   const theme = useTheme();
 
   return (
     <ThemedView style={styles.container}>
-      {word.definitions.map((definition, defIndex) => (
-        <DefinitionSection 
-          key={defIndex} 
-          definition={definition} 
-          theme={theme}
-        />
-      ))}
+      {word.meanings.map((meaning, mIndex) => {
+        return <MeaningSection key={mIndex} meaning={meaning} theme={theme} />;
+      })}
     </ThemedView>
   );
 }
 
-interface DefinitionSectionProps {
-  definition: WordDefinition['definitions'][0];
+interface MeaningSectionProps {
+  meaning: Meaning;
   theme: any;
 }
 
-function DefinitionSection({ definition, theme }: DefinitionSectionProps) {
+function MeaningSection({ meaning, theme }: MeaningSectionProps) {
   return (
-    <ThemedView style={styles.definitionSection}>
+    <ThemedView style={styles.meaningSection}>
       <View
         style={[
           styles.partOfSpeechBadge,
-          { backgroundColor: theme.tint + '20' },
+          { backgroundColor: theme.tint + "20" },
         ]}
       >
-        <ThemedText
-          style={[styles.partOfSpeechText, { color: theme.tint }]}
-        >
-          {definition.partOfSpeech}
+        <ThemedText style={[styles.partOfSpeechText, { color: theme.tint }]}>
+          {meaning.partOfSpeech}
         </ThemedText>
       </View>
 
-      {definition.meanings.map((meaning, meaningIndex) => (
-        <MeaningItem
-          key={meaningIndex}
-          meaning={meaning}
-          meaningIndex={meaningIndex}
+      {meaning.definitions.map((definition, dIndex) => (
+        <DefinitionItem
+          key={dIndex}
+          definition={definition}
+          definitionIndex={dIndex}
           theme={theme}
         />
       ))}
@@ -58,62 +52,21 @@ function DefinitionSection({ definition, theme }: DefinitionSectionProps) {
   );
 }
 
-interface MeaningItemProps {
-  meaning: WordDefinition['definitions'][0]['meanings'][0];
-  meaningIndex: number;
+interface DefinitionItemProps {
+  definition: string;
+  definitionIndex: number;
   theme: any;
 }
 
-function MeaningItem({ meaning, meaningIndex, theme }: MeaningItemProps) {
+function DefinitionItem({
+  definition,
+  definitionIndex,
+  theme,
+}: DefinitionItemProps) {
   return (
-    <ThemedView style={styles.meaningContainer}>
+    <ThemedView style={styles.definitionContainer}>
       <ThemedText style={styles.definitionText}>
-        {meaningIndex + 1}. {meaning.definition}
-      </ThemedText>
-
-      {meaning.example && (
-        <ThemedView
-          style={[
-            styles.exampleContainer,
-            { borderLeftColor: theme.tint },
-          ]}
-        >
-          <ThemedText style={styles.exampleText}>
-            &quot;{meaning.example}&quot;
-          </ThemedText>
-        </ThemedView>
-      )}
-
-      {meaning.synonyms && meaning.synonyms.length > 0 && (
-        <RelatedWords
-          label="Synonyms"
-          words={meaning.synonyms}
-        />
-      )}
-
-      {meaning.antonyms && meaning.antonyms.length > 0 && (
-        <RelatedWords
-          label="Antonyms"
-          words={meaning.antonyms}
-        />
-      )}
-    </ThemedView>
-  );
-}
-
-interface RelatedWordsProps {
-  label: string;
-  words: string[];
-}
-
-function RelatedWords({ label, words }: RelatedWordsProps) {
-  return (
-    <ThemedView style={styles.relatedWordsContainer}>
-      <ThemedText style={styles.relatedWordsLabel}>
-        {label}:
-      </ThemedText>
-      <ThemedText style={styles.relatedWordsText}>
-        {words.join(', ')}
+        {definitionIndex + 1}. {definition}
       </ThemedText>
     </ThemedView>
   );
@@ -123,11 +76,11 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
   },
-  definitionSection: {
+  meaningSection: {
     marginBottom: 24,
   },
   partOfSpeechBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -135,37 +88,14 @@ const styles = StyleSheet.create({
   },
   partOfSpeechText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  meaningContainer: {
+  definitionContainer: {
     marginBottom: 16,
   },
   definitionText: {
     fontSize: 16,
     lineHeight: 24,
     marginBottom: 8,
-  },
-  exampleContainer: {
-    borderLeftWidth: 3,
-    paddingLeft: 12,
-    marginVertical: 8,
-  },
-  exampleText: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    opacity: 0.8,
-  },
-  relatedWordsContainer: {
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-  relatedWordsLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  relatedWordsText: {
-    fontSize: 14,
-    flex: 1,
   },
 });

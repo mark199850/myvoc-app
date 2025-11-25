@@ -19,7 +19,6 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
-  // Initialize accessibility helper
   React.useEffect(() => {
     AccessibilityHelper.initialize();
   }, []);

@@ -58,7 +58,6 @@ export class HapticFeedback {
           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      // Silently fail haptic feedback errors
       console.warn('Haptic feedback error:', error);
     }
   }

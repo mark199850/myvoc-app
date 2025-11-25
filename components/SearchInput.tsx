@@ -181,22 +181,18 @@ const styles = StyleSheet.create({
 
 // Memoize SearchInput with custom comparison
 export const SearchInput = React.memo(SearchInputComponent, (prevProps, nextProps) => {
-  // Check if onWordSelect function changed
   if (prevProps.onWordSelect !== nextProps.onWordSelect) {
     return false;
   }
   
-  // Check if placeholder changed
   if (prevProps.placeholder !== nextProps.placeholder) {
     return false;
   }
   
-  // Check if language changed
   if (prevProps.language !== nextProps.language) {
     return false;
   }
   
-  // Check if disabled changed
   if (prevProps.disabled !== nextProps.disabled) {
     return false;
   }

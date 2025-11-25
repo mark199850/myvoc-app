@@ -28,7 +28,7 @@ function WordCardComponent({ word, onPress }: WordCardProps) {
     word.word,
     getMainDefinition(word),
     getPartOfSpeech(word),
-    !!word.audioUrl
+    !!word.pronunciation.default.audioUrl
   );
 
   return (
@@ -54,14 +54,14 @@ function WordCardComponent({ word, onPress }: WordCardProps) {
         </View>
       </View>
 
-      {word.phonetic && (
+      {word.pronunciation.default.ipa && (
         <ThemedText
           style={styles.phoneticText}
           {...AccessibilityHelper.createTextProps(
-            `Pronunciation: ${word.phonetic}`
+            `Pronunciation: ${word.pronunciation.default.ipa}`
           )}
         >
-          {word.phonetic}
+          {word.pronunciation.default.ipa}
         </ThemedText>
       )}
 
@@ -103,40 +103,33 @@ function WordCardComponent({ word, onPress }: WordCardProps) {
 export const WordCard = React.memo(
   WordCardComponent,
   (prevProps, nextProps) => {
-    // Check if word object changed
     if (prevProps.word.id !== nextProps.word.id) {
       return false;
     }
 
-    // Check if word content changed
     if (prevProps.word.word !== nextProps.word.word) {
       return false;
     }
 
-    // Check if phonetic changed
-    if (prevProps.word.phonetic !== nextProps.word.phonetic) {
+    if (prevProps.word.pronunciation.default.ipa !== nextProps.word.pronunciation.default.ipa ) {
       return false;
     }
 
-    // Check if audioUrl changed
-    if (prevProps.word.audioUrl !== nextProps.word.audioUrl) {
+    if (prevProps.word.pronunciation.default.audioUrl !== nextProps.word.pronunciation.default.audioUrl) {
       return false;
     }
 
-    // Check if definitions changed (shallow comparison)
     if (
-      prevProps.word.definitions.length !== nextProps.word.definitions.length
+      prevProps.word.meanings.length !== nextProps.word.meanings.length
     ) {
       return false;
     }
 
-    // Check if onPress function changed
     if (prevProps.onPress !== nextProps.onPress) {
       return false;
     }
 
-    // For performance, we'll assume definitions don't change unless the word ID changes
-    return true;
+   return true;
   }
 );
 

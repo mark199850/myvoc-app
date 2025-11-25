@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { WordDefinitions } from "@/components/WordDefinitions";
+import { WordMeanings } from "@/components/WordDefinitions";
 import { WordHeader } from "@/components/WordHeader";
 import { OPACITY, SIZES } from "@/constants/ui";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
@@ -23,8 +23,8 @@ export default function WordDetailScreen() {
   const { removeWord } = useWordOperations();
 
   const handlePlayAudio = async () => {
-    if (word?.audioUrl) {
-      await playAudio(word.audioUrl);
+    if (word?.pronunciation.default.audioUrl) {
+      await playAudio(word.pronunciation.default.audioUrl);
     }
   };
 
@@ -74,7 +74,7 @@ export default function WordDetailScreen() {
             audioLoading={audioLoading}
           />
 
-          <WordDefinitions word={word} />
+          <WordMeanings word={word} />
 
           <ThemedView style={styles.footer}>
             <ThemedText style={styles.dateAddedText}>

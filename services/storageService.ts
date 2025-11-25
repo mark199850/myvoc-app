@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserWordList } from '@/types/dictionary';
-import { STORAGE_KEYS } from '@/constants/app';
+import { STORAGE_KEYS } from "@/constants/app";
+import { UserWordList } from "@/types/dictionary";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export class StorageService {
   static async getUserWords(): Promise<UserWordList> {
@@ -8,16 +8,19 @@ export class StorageService {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_WORDS);
       return data ? JSON.parse(data) : {};
     } catch (error) {
-      console.error('Error loading user words:', error);
+      console.error("Error loading user words:", error);
       return {};
     }
   }
 
   static async saveUserWords(userWords: UserWordList): Promise<void> {
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.USER_WORDS, JSON.stringify(userWords));
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.USER_WORDS,
+        JSON.stringify(userWords)
+      );
     } catch (error) {
-      console.error('Error saving user words:', error);
+      console.error("Error saving user words:", error);
       throw error;
     }
   }
@@ -26,7 +29,7 @@ export class StorageService {
     try {
       await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
     } catch (error) {
-      console.error('Error clearing data:', error);
+      console.error("Error clearing data:", error);
       throw error;
     }
   }
